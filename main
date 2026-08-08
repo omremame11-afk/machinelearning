@@ -1,0 +1,205 @@
+import os
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, r2_score
+import pickle
+
+# --- 1. LOAD YOUR LOCAL FILE ---
+df = pd.read_csv('nifty_50.csv', on_bad_lines='skip')
+df = df.iloc[::-1].reset_index(drop=True)
+df.columns = df.columns.str.strip().str.lower()
+
+# --- 2. TECHNICAL INDICATORS & TARGET ENGINEERING ---
+# Compute short and medium-term moving averages as required features
+df['sma_7'] = df['close'].rolling(window=7).mean()
+df['sma_21'] = df['close'].rolling(window=21).mean()
+
+# Target definition: The actual numeric Close price of the NEXT day
+df['target_price'] = df['close'].shift(-1)
+df.dropna(inplace=True)
+
+print(f"Length of sanitized dataset: {len(df)}")
+
+# --- 3. DEFINE FEATURE MATRICES ---
+feature_cols = ['open', 'high', 'low', 'close', 'shares traded', 'turnover (₹ cr)', 'sma_7', 'sma_21']
+X = df[feature_cols]
+y = df['target_price']
+
+# --- 4. CHRONOLOGICAL TRAIN-TEST SPLIT (Time-Series Preservation) ---
+split_row = int(len(X) * 0.8)
+X_train, X_test = X.iloc[:split_row], X.iloc[split_row:]
+y_train, y_test = y.iloc[:split_row], y.iloc[split_row:]
+
+# --- 5. TRAIN REGRESSION MACHINE LEARNING ENGINE ---
+model = RandomForestRegressor(n_estimators=100, random_state=2)
+model.fit(X_train, y_train)
+
+# Save the updated regression pipeline model components
+with open("stock_reg_model.pkl", "wb") as f:
+    pickle.dump({'model': model, 'features': feature_cols}, f)
+print("Saved stock_reg_model.pkl successfully!")
+
+# --- 6. EVALUATE CONTINUOUS FORECASTS ---
+predictions = model.predict(X_test)
+mae = mean_absolute_error(y_test, predictions)
+r2 = r2_score(y_test, predictions)
+print(f"Mean Absolute Error: {mae:.2f}")
+print(f"R2 Regression Score: {r2:.4f}")
+
+# ==========================================================
+# MARKETPULSE ANALYTICAL VISUALIZATION DASHBOARD
+# ==========================================================
+plt.style.use('default')
+fig = plt.figure(figsize=(16, 10), facecolor='#111625')
+fig.suptitle('MarketPulse Advanced Continuous Stock Analysis', fontsize=18, fontweight='bold', color='#ffffff', y=0.97)
+
+# --- CHART 1: CONTINUOUS PRICE WAVE FORECAST OVERLAP ---
+ax1 = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=3)
+ax1.set_facecolor('#1a2035')
+sample_range = 45
+
+idx = np.arange(sample_range)
+ax1.plot(idx, X_test['close'].iloc[:sample_range], color='#8a94a6', linewidth=2, label='Current Close Price')
+
+ax1.plot(idx, X_test['sma_7'].iloc[:sample_range], color='#2979ff', linestyle=':', label='7-Day SMA Indicator')
+ax1.plot(idx, y_test.iloc[:sample_range].values, color='#00ff88', linewidth=2.5, label='Actual Tomorrow Price')
+ax1.plot(idx, predictions[:sample_range], color='#ff3366', linestyle='--', linewidth=2, label='Deep Regressor Forecast')
+
+ax1.set_title('Historical Continuous Price Wave vs Forecast Signals', fontsize=13, fontweight='bold', color='#ffffff', pad=12)
+ax1.tick_params(colors='#8a94a6')
+ax1.grid(True, linestyle=':', alpha=0.1, color='#8a94a6')
+ax1.legend(loc='upper left', facecolor='#1a2035', edgecolor='none', labelcolor='#ffffff')
+
+# --- CHART 2: PREMIUM HIGHLIGHT PERFORMANCE CARD ---
+ax2 = plt.subplot2grid((3, 3), (2, 0))
+ax2.set_facecolor('#1a2035')
+ax2.axis('off')
+rect = plt.Rectangle((0.05, 0.05), 0.9, 0.9, facecolor='#1a2035', edgecolor='#2a3554', transform=ax2.transAxes)
+ax2.add_patch(rect)
+ax2.text(0.5, 0.60, f"₹ {mae:.2f}", fontsize=32, fontweight='bold', color='#ff3366', ha='center', va='center')
+ax2.text(0.5, 0.30, "Mean Absolute Error", fontsize=12, fontweight='semibold', color='#ffffff', ha='center', va='center')
+
+# --- CHART 3: TECHNICAL PERFORMANCE RATIO R2 ---
+ax3 = plt.subplot2grid((3, 3), (2, 1))
+ax3.set_facecolor('#1a2035')
+ax3.axis('off')
+rect2 = plt.Rectangle((0.05, 0.05), 0.9, 0.9, facecolor='#1a2035', edgecolor='#2a3554', transform=ax3.transAxes)
+ax3.add_patch(rect2)
+ax3.text(0.5, 0.60, f"{r2:.4f}", fontsize=32, fontweight='bold', color='#00ff88', ha='center', va='center')
+ax3.text(0.5, 0.30, "Model R2 Fit Variance", fontsize=12, fontweight='semibold', color='#ffffff', ha='center', va='center')
+# ==========================================================
+# MARKETPULSE DESIGN LAYOUT (FIXED GRID OVERLAP)
+# ==========================================================
+plt.style.use('default')
+
+# Theme styling presets
+bg_dark = '#111625'
+card_dark = '#1a2035'
+color_up = '#00ff88'     # Neon Matrix Green
+color_down = '#ff3366'   # Crimson Red
+text_light = '#ffffff'   # Pure White text
+text_muted = '#8a94a6'   # Soft Grey labels
+
+fig = plt.figure(figsize=(16, 10), facecolor=bg_dark)
+fig.suptitle('MarketPulse Advanced Continuous Stock Analysis', fontsize=18, fontweight='bold', color=text_light, y=0.97)
+
+# --- CHART 1: MAIN FORECAST OVERLAP (Top Row - Spans Full Width) ---
+# Grid size: 2 rows, 2 columns. Position: Row 0, Col 0, spanning 2 columns wide
+ax1 = plt.subplot2grid((2, 2), (0, 0), colspan=2)
+ax1.set_facecolor(card_dark)
+sample_range = 45
+idx = np.arange(sample_range)
+
+# A. Plot Price Technical Features (Left Axis - Value Scale)
+ax1.plot(idx, X_test['open'].iloc[:sample_range].values, color='#9b5de5', linestyle='-.', linewidth=1.2, label='Open Price')
+ax1.plot(idx, X_test['high'].iloc[:sample_range].values, color='#f1c40f', linestyle=':', linewidth=1.2, label='Highest Price')
+ax1.plot(idx, X_test['close'].iloc[:sample_range].values, color=text_muted, linestyle='-', linewidth=2, label='Current Close Price')
+ax1.plot(idx, X_test['sma_7'].iloc[:sample_range].values, color='#2979ff', linestyle=':', linewidth=1.5, label='7-Day SMA Indicator')
+ax1.plot(idx, y_test.iloc[:sample_range].values, color=color_up, linestyle='-', linewidth=2.5, label='Actual Tomorrow Price')
+ax1.plot(idx, predictions[:sample_range], color=color_down, linestyle='--', linewidth=2, label='Deep Regressor Forecast')
+
+# Format Left Axis Labels & Grids
+ax1.set_title('Historical Continuous Price Wave vs Forecast Signals', fontsize=12, fontweight='bold', color=text_light, pad=12)
+ax1.set_ylabel('Nifty Value Price (INR)', color=text_light, fontsize=10)
+ax1.tick_params(colors=text_muted)
+ax1.grid(True, linestyle=':', alpha=0.1, color=text_muted)
+
+# B. IMPLEMENT SECONDARY RIGHT AXIS FOR TURNOVER DATA
+ax1_twin = ax1.twinx()
+ax1_twin.grid(False) # Turn off duplicate grid lines to avoid visual confusion
+turnover_values = X_test['turnover (₹ cr)'].iloc[:sample_range].values
+# Plotting as a subtle semi-transparent filled area graph to mimic modern exchange charts
+ax1_twin.fill_between(idx, turnover_values, 0, color='#e67e22', alpha=0.12, label='Turnover (₹ Cr)')
+ax1_twin.set_ylabel('Asset Turnover Volume (₹ Cr)', color='#e67e22', fontsize=10)
+ax1_twin.tick_params(colors='#e67e22')
+
+# C. Merge Legends from Both Axes Into One Clean Window Block
+lines_left, labels_left = ax1.get_legend_handles_labels()
+lines_right, labels_right = ax1_twin.get_legend_handles_labels()
+ax1.legend(lines_left + lines_right, labels_left + labels_right, 
+           loc='upper left', facecolor=card_dark, edgecolor='none', labelcolor=text_light, fontsize=9)
+
+
+
+# --- CHART 2: METRIC HIGHLIGHT PANEL (Bottom Left) ---
+# Position: Row 1, Col 0 (Takes up the lower-left square)
+ax2 = plt.subplot2grid((2, 2), (1, 0))
+ax2.set_facecolor(card_dark)
+ax2.axis('off')
+
+rect = plt.Rectangle((0.05, 0.05), 0.9, 0.9, facecolor=card_dark, edgecolor='#2a3554', linewidth=1, transform=ax2.transAxes, zorder=1)
+ax2.add_patch(rect)
+ax2.text(0.5, 0.60, f"INR {mae:.2f}", fontsize=36, fontweight='bold', color=color_down, ha='center', va='center', zorder=2)
+ax2.text(0.5, 0.35, "Mean Absolute Error", fontsize=13, fontweight='semibold', color=text_light, ha='center', va='center', zorder=2)
+
+
+# --- CHART 3: COLOR-CODED REAL PRICE WAVE (Bottom Right) ---
+# Position: Row 1, Col 1 (Takes up the lower-right square)
+ax4 = plt.subplot2grid((2, 2), (1, 1))
+ax4.set_facecolor(card_dark)
+
+actual_prices = X_test['close'].iloc[:sample_range].values
+indices_to_plot = np.arange(sample_range)
+
+latest_actual_price = actual_prices[-1]
+latest_predicted_price = predictions[sample_range-1] 
+
+
+# Setup legends
+ax4.plot([], [], color=color_up, linewidth=3, label='Forecast: Market UP')
+ax4.plot([], [], color=color_down, linewidth=3, label='Forecast: Market DOWN/FLAT')
+
+# Loop through steps to map line segments cleanly without overlapping code layers
+for i in range(len(actual_prices) - 1):
+    if actual_prices[i+1] > actual_prices[i]:
+        segment_color = color_up
+    else:
+        segment_color = color_down
+    
+    ax4.plot(indices_to_plot[i:i+2], actual_prices[i:i+2], 
+             color=segment_color, linewidth=3, solid_capstyle='round', zorder=3)
+    ax4.fill_between(indices_to_plot[i:i+2], actual_prices[i:i+2], min(actual_prices) - 50,
+                     color=segment_color, alpha=0.07, zorder=2)
+
+# Dynamic Prediction Callout Text Badge
+ax4.text(indices_to_plot[-1] + 1, latest_predicted_price, f"Tomorrow Forecast:\nINR {latest_predicted_price:.2f}", 
+         color='#00e5ff', fontsize=10, fontweight='bold', va='center', ha='left',
+         bbox=dict(facecolor=card_dark, edgecolor='#00e5ff', boxstyle='round,pad=0.5', alpha=0.95, linewidth=1.5),
+         zorder=5)
+
+ax4.scatter(indices_to_plot[-1], latest_actual_price, color='#ffffff', s=50, edgecolor=color_up, zorder=4)
+
+ax4.set_title(f'Real-Life Price Wave Color-Coded by Predicted Trend (Recent {sample_range} Days)', fontsize=12, fontweight='semibold', color=text_light, pad=15)
+ax4.set_xlabel('Chronological Market Days', fontsize=10, color=text_muted)
+ax4.set_ylabel('Nifty Close Value Price', fontsize=10, color=text_muted)
+ax4.set_xlim(min(indices_to_plot) - 1, max(indices_to_plot) + 14) # Margin padding for text badge
+ax4.set_ylim(min(actual_prices) - 30, max(actual_prices) + 30)
+ax4.tick_params(colors=text_muted)
+ax4.grid(True, linestyle=':', alpha=0.1, color=text_muted)
+ax4.legend(loc='upper left', frameon=True, facecolor=card_dark, edgecolor='none', labelcolor=text_light)
+
+plt.tight_layout(pad=3.0)
+plt.show(block=True)
