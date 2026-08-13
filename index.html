@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarketPulse Stock Prediction Engine</title>
+
+    <link href="https://jsdelivr.net" rel="stylesheet">
+    <style>
+        body { 
+            background-color:#111625; 
+            color:#ffffff; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        .card { 
+            background-color: #1a2035; 
+            border: 1px solid #2a3554; 
+            border-radius: 8px;
+        }
+        .text-muted { color: #8a94a6 !important; }
+        .form-label { font-weight: 500; font-size: 0.85rem; color: #8a94a6; margin-bottom: 4px; }
+        .form-control { 
+            background-color: #111625; 
+            border: 1px solid #2a3554; 
+            color: #ffffff; 
+            padding: 0.55rem 0.75rem;
+        }
+        .form-control::placeholder { color: #4f5d75; }
+        .form-control:focus { 
+            background-color: #111625; 
+            border-color: #2979ff; 
+            color: #ffffff; 
+            box-shadow: 0 0 0 0.25rem rgba(41, 121, 255, 0.15); 
+        }
+        .btn-pulse { 
+            background-color: #2979ff; 
+            border: 1px solid #1565c0; 
+            color: #ffffff; font-weight: 600; padding: 0.7rem;
+        }
+        .btn-pulse:hover { background-color: #1565c0; color: #ffffff; }
+        .alert-up { 
+            background-color: rgba(0, 255, 136, 0.08); 
+            border: 1px solid #00ff88; color: #00ff88; 
+        }
+        .alert-down { 
+            background-color: rgba(255, 51, 102, 0.08); 
+            border: 1px solid #ff3366; color: #ff3366; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-7 col-lg-8 col-md-10">
+            <div class="card shadow-lg p-2">
+                <div class="card-header border-bottom border-secondary text-center pb-2">
+                    <h3 class="fw-bold mb-0 text-white">MarketPulse Dashboard</h3>
+                    <p class="text-muted small mb-0">Deep Learning & Regressive Valuation Pipeline</p>
+                </div>
+                <div class="card-body pt-3">
+                    
+                    {% if prediction %}
+                        <div class="alert alert-{{ alert_class }} text-center fw-bold rounded shadow-sm py-3 mb-3 animate fadeIn" role="alert">
+                            {{ prediction }}
+                        </div>
+                    {% endif %}
+
+                    <form action="/" method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label for="open" class="form-label">Open Valuation Price</label>
+                                <input type="number" step="any" class="form-control" id="open" name="open" required 
+                                       value="{{ request.form.get('open', '') }}" placeholder="e.g., 21497.65">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label for="high" class="form-label">High Threshold Price</label>
+                                <input type="number" step="any" class="form-control" id="high" name="high" required 
+                                       value="{{ request.form.get('high', '') }}" placeholder="e.g., 21575.00">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label for="low" class="form-label">Low Position Price</label>
+                                <input type="number" step="any" class="form-control" id="low" name="low" required 
+                                       value="{{ request.form.get('low', '') }}" placeholder="e.g., 21495.80">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label for="close" class="form-label">Session Closing Value (Today)</label>
+                                <input type="number" step="any" class="form-control" id="close" name="close" required 
+                                       value="{{ request.form.get('close', '') }}" placeholder="e.g., 21545.75">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sma_7" class="form-label">7-Day Moving Average (SMA)</label>
+                                <input type="number" step="any" class="form-control" id="sma_7" name="sma_7" required 
+                                       value="{{ request.form.get('sma_7', '') }}" placeholder="e.g., 21480.20">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sma_21" class="form-label">21-Day Moving Average (SMA)</label>
+                                <input type="number" step="any" class="form-control" id="sma_21" name="sma_21" required 
+                                       value="{{ request.form.get('sma_21', '') }}" placeholder="e.g., 21395.10">
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-pulse w-75 rounded-2 text-uppercase fw-bold">Execute MarketPulse Prediction</button>
+                            <a href="/" class="btn btn-outline-secondary w-25 rounded-2 text-uppercase fw-bold pt-2 text-decoration-none text-center">Clear Form</a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
