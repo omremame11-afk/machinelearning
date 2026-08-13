@@ -23,8 +23,8 @@ df.dropna(inplace=True)
 
 print(f"Length of sanitized dataset: {len(df)}")
 
-# --- 3. DEFINE FEATURE MATRICES ---
-feature_cols = ['open', 'high', 'low', 'close', 'shares traded', 'turnover (₹ cr)', 'sma_7', 'sma_21']
+# --- 3. DEFINE FEATURE MATRICES (OPTIIMIZED PRICE SEGMENTS) ---
+feature_cols = ['open', 'high', 'low', 'close', 'sma_7', 'sma_21']
 X = df[feature_cols]
 y = df['target_price']
 
@@ -130,8 +130,7 @@ ax1.grid(True, linestyle=':', alpha=0.1, color=text_muted)
 # B. IMPLEMENT SECONDARY RIGHT AXIS FOR TURNOVER DATA
 ax1_twin = ax1.twinx()
 ax1_twin.grid(False) # Turn off duplicate grid lines to avoid visual confusion
-turnover_values = X_test['turnover (₹ cr)'].iloc[:sample_range].values
-# Plotting as a subtle semi-transparent filled area graph to mimic modern exchange charts
+turnover_values = df['turnover (₹ cr)'].iloc[split_row : split_row + sample_range].values
 ax1_twin.fill_between(idx, turnover_values, 0, color='#e67e22', alpha=0.12, label='Turnover (₹ Cr)')
 ax1_twin.set_ylabel('Asset Turnover Volume (₹ Cr)', color='#e67e22', fontsize=10)
 ax1_twin.tick_params(colors='#e67e22')
